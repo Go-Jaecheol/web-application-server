@@ -3,9 +3,13 @@ package webserver;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.Map;
 
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.HttpRequestUtils;
+import util.IOUtils;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -22,7 +26,7 @@ public class RequestHandler extends Thread {
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
-
+            int contentLength = 0;
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
             String line = br.readLine();
             log.debug("line: {}", line);
@@ -31,9 +35,20 @@ public class RequestHandler extends Thread {
             }
             String[] tokens = line.split(" ");
             String url = tokens[1];
+
             while (!"".equals(line)) {
                 line = br.readLine();
                 log.debug("line: {}", line);
+                if (line.contains("Content-Length")) {
+                    tokens = line.split(":");
+                    contentLength = Integer.parseInt(tokens[1].trim());
+                }
+            }
+            if (url.startsWith("/user/create")) {
+                String body = IOUtils.readData(br, contentLength);
+                Map<String, String> params = HttpRequestUtils.parseQueryString(body);
+                User user = new User(params.get("userId"), params.get("password"), params.get("name"), params.get("email"));
+                log.debug("user: {}", user);
             }
 
             DataOutputStream dos = new DataOutputStream(out);
