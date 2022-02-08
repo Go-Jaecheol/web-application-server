@@ -1,0 +1,4 @@
+GET /user/create?userId=test&password=password&name=annonymous HTTP/1.1
+HOST: localhost:8080
+Connection: keep-alive
+Accept: */*
